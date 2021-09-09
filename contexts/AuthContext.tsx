@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useEffect, useState } from 'react';
 import { setCookie, parseCookies, destroyCookie } from 'nookies';
-import { useRouter } from 'next/router';
+import router, { useRouter } from 'next/router';
 import { api } from '../services/apiClient';
 
 type User = {
@@ -15,7 +15,8 @@ type SignInCredentials = {
 };
 
 type AuthContextData = {
-  signIn(credentials: SignInCredentials): Promise<void>;
+  signIn: (credentials: SignInCredentials) => Promise<void>;
+  signOut: () => void;
   user: User;
   isAuthenticated: boolean;
 };
@@ -25,6 +26,13 @@ type AuthProviderProps = {
 };
 
 export const AuthContext = createContext({} as AuthContextData);
+
+export function signOut() {
+  destroyCookie(undefined, 'nextauth.token');
+  destroyCookie(undefined, 'nextauth.refreshToken');
+
+  router.push('/');
+}
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User>(null);
@@ -86,7 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <AuthContext.Provider value={{ signIn, user, isAuthenticated }}>
+    <AuthContext.Provider value={{ signIn, signOut, user, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
